@@ -1,4 +1,4 @@
-     <html lang="en">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -12,7 +12,7 @@
       position: absolute;
       width: 200px;
       height: 20px;
-      margin: 10px;
+      margin: 1em;
     }
 
     #myBar {
@@ -20,16 +20,27 @@
       height: 20px;
       background-color: #4CAF50;
     }
+
+    #coins {
+    position: absolute;
+    margin-top: .5em;
+    margin-left: 230px;
+    font-family: sans-serif;
+    color: gold;
+    font-size: 1.5em;
+}
   </style>
 </head>
 
 <body>
+  <div id="coins">0</div>
   <div id="myProgress">
     <div id="myBar"></div>
   </div>
   <script src="decomp.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js"
     integrity="sha256-Bmvb4pJWin8rqq3GnwPz/hxBtqXaMdZHJnHYlpRULa4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
   <script src="script.js"></script>
 </body>
 
