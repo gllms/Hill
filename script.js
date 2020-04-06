@@ -12,12 +12,12 @@ let started = false;
 
 let speed = .5;
 let spring = .05;
-let springLength = 80;
+let springLength = 70;
 
 let roadPieces = [];
 let roadPieceLength = 50;
 let currentPos = {
-  x: -200,
+  x: -400,
   y: 0
 };
 let simplex = new SimplexNoise();
@@ -25,9 +25,17 @@ let simplex = new SimplexNoise();
 let barElem = document.getElementById("myBar");
 let benzine = 100;
 
+let tooSlowTimeout = null;
+let benzineZeroTimeout = null;
+
+let oldCoins = 0;
 let coins = 0;
 
-let tooSlowTimeout = null;
+let savedCoins = parseInt(localStorage.getItem("hillCoins"));
+if (savedCoins) {
+  setCoins(savedCoins);
+  oldCoins = savedCoins;
+}
 
 // module aliases
 let Engine = Matter.Engine,
@@ -37,8 +45,6 @@ let Engine = Matter.Engine,
   Events = Matter.Events,
   Body = Matter.Body,
   Constraint = Matter.Constraint,
-  Mouse = Matter.Mouse,
-  MouseConstraint = Matter.MouseConstraint,
   Vertices = Matter.Vertices,
   Svg = Matter.Svg;
 
@@ -63,10 +69,10 @@ let car = Bodies.fromVertices(300, 100, [{
   x: 220,
   y: 50
 }, {
-  x: 0,
+  x: 25,
   y: 50
 }, {
-  x: 0,
+  x: 25,
   y: 100
 }, {
   x: 32,
@@ -142,7 +148,7 @@ let headSpring = Constraint.create({
     x: -35,
     y: 0
   },
-  length: 30,
+  length: 50,
   bodyB: head,
   stiffness: spring,
   damping: .05,
@@ -154,32 +160,21 @@ let wheelA = Bodies.circle(200, 160, 30, {
   render: {
     fillStyle: "#111"
   },
-  friction: 1,
+  friction: .8,
   label: "car"
 });
 let wheelB = Bodies.circle(400, 160, 30, {
   render: {
     fillStyle: "#111"
   },
-  friction: 1,
+  friction: .8,
   label: "car"
 });
 
-let springs = [createSpring(wheelA, -110, 0), createSpring(wheelA, -60, 0), createSpring(wheelB, 50, 0), createSpring(wheelB, 100, 0)];
-
-let mouse = Mouse.create(render.canvas),
-  mouseConstraint = MouseConstraint.create(engine, {
-    mouse: mouse,
-    constraint: {
-      stiffness: 0.2,
-      render: {
-        visible: false
-      }
-    }
-  });
+let springs = [createSpring(wheelA, -130, 0), createSpring(wheelA, -80, 0), createSpring(wheelB, 35, 0), createSpring(wheelB, 85, 0)];
 
 // add all of the bodies to the world
-World.add(engine.world, [car, head, headSpring, wheelA, wheelB, /*ground,*/ ...springs, mouseConstraint]);
+World.add(engine.world, [car, head, headSpring, wheelA, wheelB, /*ground,*/ ...springs]);
 
 // run the engine
 Engine.run(engine);
@@ -205,6 +200,10 @@ Events.on(engine, "beforeUpdate", function (event) {
       Body.setAngularVelocity(wheelA, -speed);
       Body.setAngularVelocity(wheelB, -speed);
     }
+    clearTimeout(benzineZeroTimeout);
+    benzineZeroTimeout = null;
+  } else {
+    if (benzineZeroTimeout == null && started) benzineZeroTimeout = setTimeout(gameOver, 5000);
   }
   if (benzine >= 40) {
     barElem.style.background = "#4CAF50";
@@ -234,11 +233,9 @@ Events.on(engine, "beforeUpdate", function (event) {
 
   // Volg speler
   Render.lookAt(render, car, {
-    x: 200,
-    y: 200
+    x: 400,
+    y: 400
   });
-
-  Mouse.setOffset(mouseConstraint.mouse, render.bounds.min);
 });
 
 Events.on(engine, 'collisionStart', function (event) {
@@ -250,8 +247,7 @@ Events.on(engine, 'collisionStart', function (event) {
   }
   let filteredCoin = pairs.filter((e) => (e.bodyA.label == "car" && e.bodyB.label == "coin") || (e.bodyA.label == "coin" && e.bodyB.label == "car"));
   if (filteredCoin.length > 0) {
-    coins++;
-    document.querySelector("#coins").innerHTML = coins;
+    setCoins(coins + 1);
     if (filteredCoin[0].bodyA.label == "coin") World.remove(engine.world, filteredCoin[0].bodyA);
     else World.remove(engine.world, filteredCoin[0].bodyB);
   }
@@ -313,7 +309,7 @@ function center(verts) {
 function createRoadPiece(leftPos, rightPos) {
   let verts = [{
     x: leftPos.x,
-    y: height * 2
+    y: height * 3
   }, {
     x: leftPos.x,
     y: leftPos.y
@@ -322,7 +318,7 @@ function createRoadPiece(leftPos, rightPos) {
     y: rightPos.y
   }, {
     x: rightPos.x,
-    y: height * 2
+    y: height * 3
   }];
   let c = center(verts);
   return Bodies.fromVertices(c.x, c.y, verts, {
@@ -381,8 +377,14 @@ function addJerrycan(x) {
   }));
 }
 
+function setCoins(n) {
+  coins = n;
+  document.querySelector("#coins").innerHTML = coins;
+}
+
 function gameOver() {
-  alert("Game Over\nScore: " + coins);
+  localStorage.setItem("hillCoins", coins);
+  alert("Game Over\nScore: " + (coins - oldCoins));
   location.reload();
 }
 
